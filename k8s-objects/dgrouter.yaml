@@ -1,0 +1,15 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: my-dg
+spec:
+  to:
+    kind: Service
+    name: datagrid-service
+    weight: 100
+  port:
+    targetPort: infinispan
+  tls:
+    termination: reencrypt
+    insecureEdgeTerminationPolicy: Allow
+  wildcardPolicy: None
