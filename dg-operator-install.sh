@@ -43,3 +43,25 @@ spec:
     insecureEdgeTerminationPolicy: Allow
   wildcardPolicy: None
 EOF
+oc get secret datagrid-service-generated-secret -o jsonpath="{.data.identities\.yaml}" | base64 --decode
+export PASSWORD=$(oc get secret datagrid-service-generated-secret -o jsonpath="{.data.identities\.yaml}" | base64 --decode | grep password | awk '{print $2}')
+oc apply -f - << EOF
+apiVersion: infinispan.org/v2alpha1
+kind: Cache
+metadata:
+  name: mycachedefinition
+spec:
+  clusterName: datagrid-service
+  name: mycache
+EOF
+sleep 10
+for i in {1..100} ; do
+  curl -H 'Content-Type: text/plain' -k -u developer:$PASSWORD -X POST -d "myvalue$i" https://my-dg-dgdemo.2886795286-80-elsy07.environments.katacoda.com/rest/v2/caches/mycache/mykey$i
+  echo "Added mykey$i:myvalue$i"
+done
+sleep 10
+curl -k -u developer:$PASSWORD https://my-dg-dgdemo.2886795286-80-elsy07.environments.katacoda.com/rest/v2/caches/mycache/mykey22
+curl -H 'Content-Type: text/plain' -k -u developer:$PASSWORD -X PUT -d "mynewvalue22" https://my-dg-dgdemo.2886795286-80-elsy07.environments.katacoda.com/rest/v2/caches/mycache/mykey22
+curl -k -u developer:$PASSWORD https://my-dg-dgdemo.2886795286-80-elsy07.environments.katacoda.com/rest/v2/caches/mycache/mykey22
+curl -k -u developer:$PASSWORD -X DELETE https://my-dg-dgdemo.2886795286-80-elsy07.environments.katacoda.com/rest/v2/caches/mycache/mykey22
+curl -i -k -u developer:$PASSWORD https://my-dg-dgdemo.2886795286-80-elsy07.environments.katacoda.com/rest/v2/caches/mycache/mykey22
